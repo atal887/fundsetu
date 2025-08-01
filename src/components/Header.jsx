@@ -1,83 +1,78 @@
-import { useState, useEffect } from "react";
-import CivilScore from "./CivilScore";
-import GSTFiling from "./GSTFiling";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Header() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState("");
 
   useEffect(() => {
-    const savedUser = localStorage.getItem("fundsetuUser");
-    if (savedUser) setUser(JSON.parse(savedUser));
-  }, []);
+    // Load user from localStorage initially
+    const storedUser = localStorage.getItem("fundsetuUser");
+    if (storedUser) setUser(JSON.parse(storedUser));
 
-  const handleLogin = () => {
-    const name = prompt("Enter your name:");
-    const phone = prompt("Enter your phone number:");
-    const gst = prompt("Enter your GST number:");
-    
-    if (name && phone && gst) {
-      const newUser = { name, phone, gst };
-      localStorage.setItem("fundsetuUser", JSON.stringify(newUser));
-      setUser(newUser);
-    }
-  };
+    // 🔹 Listen for login/logout events
+    const handleUserChange = () => {
+      const updatedUser = localStorage.getItem("fundsetuUser");
+      setUser(updatedUser ? JSON.parse(updatedUser) : null);
+    };
+
+    window.addEventListener("userUpdated", handleUserChange);
+
+    return () => {
+      window.removeEventListener("userUpdated", handleUserChange);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("fundsetuUser");
     setUser(null);
-    setActiveTab("");
+
+    // 🔹 Notify all components about logout
+    window.dispatchEvent(new Event("userUpdated"));
+    navigate("/");
+  };
+
+  const handleLoginClick = () => {
+    // Trigger Home.jsx modal
+    window.dispatchEvent(new CustomEvent("openLoginModal"));
   };
 
   return (
-    <header className="flex justify-between items-center px-8 py-4 bg-white shadow-md">
-      <div className="text-2xl font-bold text-blue-600">FundSetu</div>
-      
-      <div className="flex items-center gap-4">
-        {!user ? (
-          <button 
-            onClick={handleLogin} 
-            className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
+    <header className="fixed top-0 left-0 w-full bg-white shadow-md z-50">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-4 flex justify-between items-center">
+
+        {/* Logo */}
+        <Link
+          to="/"
+          className="text-2xl font-extrabold text-gray-800 tracking-wide hover:text-gray-900"
+        >
+          FundSetu
+        </Link>
+
+        {/* Navigation */}
+        <nav className="hidden md:flex space-x-8 text-gray-600 font-medium">
+          <Link to="/about" className="hover:text-gray-900 transition">About</Link>
+          <Link to="/support" className="hover:text-gray-900 transition">Support</Link>
+          <Link to="/contact" className="hover:text-gray-900 transition">Contact Us</Link>
+        </nav>
+
+        {/* Login / Logout */}
+        {user ? (
+          <button
+            onClick={handleLogout}
+            className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition font-medium shadow-sm"
+          >
+            Logout
+          </button>
+        ) : (
+          <button
+            onClick={handleLoginClick}
+            className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition font-medium shadow-sm"
           >
             Login
           </button>
-        ) : (
-          <>
-            <button
-              onClick={() => setActiveTab("civil")}
-              className={`px-4 py-2 rounded-lg transition ${
-                activeTab === "civil" ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"
-              }`}
-            >
-              Civil Score
-            </button>
-
-            <button
-              onClick={() => setActiveTab("gst")}
-              className={`px-4 py-2 rounded-lg transition ${
-                activeTab === "gst" ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"
-              }`}
-            >
-              GST Filing
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="ml-3 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
-          </>
         )}
       </div>
-
-      {/* Right-side Panel Simulation */}
-      {user && (
-        <div className="absolute top-20 right-8 bg-white shadow-lg border rounded-xl p-6 w-80">
-          {activeTab === "civil" && <CivilScore />}
-          {activeTab === "gst" && <GSTFiling />}
-        </div>
-      )}
     </header>
   );
 }
