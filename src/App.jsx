@@ -5,6 +5,7 @@ import LoanForm from "./components/LoanForm";
 import InvestorForm from "./components/InvestorForm";
 import CivilScore from "./components/CivilScore";
 import GSTFiling from "./components/GSTFiling";
+import Profile from "./components/Profile.jsx";
 
 export default function App() {
   return (
@@ -16,6 +17,10 @@ export default function App() {
         <Route path="/invest" element={<InvestorForm />} />
         <Route path="/cibil" element={<CivilScore />} />
         <Route path="/gst-filing" element={<GSTFiling />} />
+
+
+        <Route path="/profile" element={<Profile />} />
+
       </Routes>
     </Router>
   );
